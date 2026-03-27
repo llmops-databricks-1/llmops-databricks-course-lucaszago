@@ -1,6 +1,6 @@
 resources:
   jobs:
-    semantic_scholar_ingestion_job: 
+    semantic_scholar_ingestion_job:
       name: semantic_scholar_ingestion
       tags:
         project_name: "semantic_scholar"

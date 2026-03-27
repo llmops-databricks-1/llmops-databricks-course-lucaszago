@@ -12,11 +12,11 @@
 
 # COMMAND ----------
 
+from databricks.vector_search.reranker import DatabricksReranker
 from loguru import logger
 from pyspark.sql import SparkSession
-from databricks.vector_search.reranker import DatabricksReranker
 
-from semantic_curator.config import load_config, get_env
+from semantic_curator.config import get_env, load_config
 from semantic_curator.vector_search import VectorSearchManager
 
 # COMMAND ----------
@@ -47,11 +47,10 @@ logger.info(f"Index Name: {vs_manager.index_name}")
 logger.info("Setting up vector search index...")
 index = vs_manager.create_or_get_index()
 
-logger.info(f"\n✓ Vector search setup complete!")
+logger.info("\n✓ Vector search setup complete!")
 logger.info(f"  Index: {vs_manager.index_name}")
 logger.info(
-    f"  Source: {vs_manager.catalog}.{vs_manager.schema}"
-    f".semantic_scholar_chunks_table"
+    f"  Source: {vs_manager.catalog}.{vs_manager.schema}.semantic_scholar_chunks_table"
 )
 logger.info(f"  Embedding Model: {vs_manager.embedding_model}")
 
@@ -63,14 +62,11 @@ logger.info("✓ Index sync complete")
 # COMMAND ----------
 
 
-def parse_vector_search_results(results):
+def parse_vector_search_results(results: dict) -> list[dict]:
     """Parse vector search results from array format to dict format."""
-    columns = [
-        col["name"]
-        for col in results.get("manifest", {}).get("columns", [])
-    ]
+    columns = [col["name"] for col in results.get("manifest", {}).get("columns", [])]
     data_array = results.get("result", {}).get("data_array", [])
-    return [dict(zip(columns, row_data)) for row_data in data_array]
+    return [dict(zip(columns, row_data, strict=False)) for row_data in data_array]
 
 
 # COMMAND ----------
@@ -150,9 +146,7 @@ results = index.similarity_search(
     columns=["text", "id", "title", "abstract"],
     num_results=5,
     query_type="hybrid",
-    reranker=DatabricksReranker(
-        columns_to_rerank=["text", "title", "abstract"]
-    ),
+    reranker=DatabricksReranker(columns_to_rerank=["text", "title", "abstract"]),
 )
 
 logger.info(f"Query: {query}")
@@ -214,11 +208,9 @@ for i, row in enumerate(parse_vector_search_results(results_reranked), 1):
 
 # Check index status
 index_info = vs_manager.client.get_index(
-    endpoint_name=vs_manager.endpoint_name,
-    index_name=vs_manager.index_name
+    endpoint_name=vs_manager.endpoint_name, index_name=vs_manager.index_name
 )
 
 logger.info("Index Information:")
 logger.info(f"  Name: {index_info.name}")
 logger.info(f"  Endpoint: {index_info.endpoint_name}")
-

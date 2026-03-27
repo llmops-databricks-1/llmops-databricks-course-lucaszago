@@ -1,6 +1,5 @@
 """Configuration management for Arxiv Curator."""
 
-import os
 from pathlib import Path
 
 import yaml
@@ -19,12 +18,15 @@ class ProjectConfig(BaseModel):
     embedding_endpoint: str = Field(..., description="Embedding endpoint name")
     warehouse_id: str = Field(..., description="Warehouse ID")
     vector_search_endpoint: str = Field(..., description="Vector search endpoint name")
-    genie_space_id: str | None = Field(None, description="Genie space ID for MCP integration")
-    system_prompt: str = Field(
-        default="You are a helpful AI assistant that helps users find and understand research papers.",
-        description="System prompt for the agent"
+    genie_space_id: str | None = Field(
+        None, description="Genie space ID for MCP integration"
     )
-    
+    system_prompt: str = Field(
+        default="You are a helpful AI assistant that helps users find "
+        "and understand research papers.",
+        description="System prompt for the agent",
+    )
+
     model_config = {"populate_by_name": True}
 
     @classmethod
@@ -39,7 +41,8 @@ class ProjectConfig(BaseModel):
             ProjectConfig instance
         """
         if env not in ["prd", "acc", "dev"]:
-            raise ValueError(f"Invalid environment: {env}. Expected 'prd', 'acc', or 'dev'")
+            msg = f"Invalid environment: {env}. Expected 'prd', 'acc', or 'dev'"
+            raise ValueError(msg)
 
         with open(config_path) as f:
             config_data = yaml.safe_load(f)
@@ -53,7 +56,7 @@ class ProjectConfig(BaseModel):
     def schema(self) -> str:
         """Alias for db_schema for backward compatibility."""
         return self.db_schema
-    
+
     @property
     def full_schema_name(self) -> str:
         """Get fully qualified schema name."""
@@ -89,13 +92,15 @@ class ChunkingConfig(BaseModel):
     separator: str = Field("\n\n", description="Separator for chunking")
 
 
-def load_config(config_path: str = "project_config.yml", env: str = "dev") -> ProjectConfig:
+def load_config(
+    config_path: str = "project_config.yml", env: str = "dev"
+) -> ProjectConfig:
     """Load project configuration.
-    
+
     Args:
         config_path: Path to configuration file
         env: Environment name
-        
+
     Returns:
         ProjectConfig instance
     """
@@ -109,7 +114,7 @@ def load_config(config_path: str = "project_config.yml", env: str = "dev") -> Pr
                 config_path = str(candidate)
                 break
             current = current.parent
-    
+
     return ProjectConfig.from_yaml(config_path, env)
 
 

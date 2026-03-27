@@ -23,7 +23,6 @@ from pyspark.sql import types as T
 from pyspark.sql.functions import (
     col,
     concat_ws,
-    current_timestamp,
     explode,
     udf,
 )
@@ -82,9 +81,7 @@ class DataProcessor:
                 f"Found existing semantic_scholar_papers table. Starting from: {start}"
             )
         else:
-            start = time.strftime(
-                "%Y%m%d%H%M", time.gmtime(time.time() - 24 * 3600 * 90)
-            )
+            start = time.strftime("%Y%m%d%H%M", time.gmtime(time.time() - 24 * 3600 * 90))
             logger.info(
                 f"No existing semantic_scholar_papers table. "
                 f"Starting from 90 days ago: {start}"
@@ -166,18 +163,14 @@ class DataProcessor:
 
             for paper in batch:
                 authors = [
-                    a.get("name")
-                    for a in paper.get("authors", [])
-                    if a.get("name")
+                    a.get("name") for a in paper.get("authors", []) if a.get("name")
                 ]
                 pub_date = paper.get("publicationDate")
                 processed: int | None = None
                 if pub_date:
                     try:
                         processed = int(
-                            datetime.fromisoformat(pub_date).strftime(
-                                "%Y%m%d%H%M"
-                            )
+                            datetime.fromisoformat(pub_date).strftime("%Y%m%d%H%M")
                         )
                     except ValueError:
                         processed = None
@@ -213,9 +206,7 @@ class DataProcessor:
                 )
 
                 if len(records) >= max_results:
-                    logger.info(
-                        f"Reached max_results={max_results}; stopping."
-                    )
+                    logger.info(f"Reached max_results={max_results}; stopping.")
                     return records[:max_results]
 
             next_token = payload.get("token")
@@ -230,8 +221,7 @@ class DataProcessor:
     def download_and_store_papers(
         self,
         query: str = (
-            '(llm OR "large language model" OR rag'
-            ' OR "retrieval augmented generation")'
+            '(llm OR "large language model" OR rag OR "retrieval augmented generation")'
         ),
         max_results: int = 500,
         batch_size: int = 100,
@@ -308,17 +298,14 @@ class DataProcessor:
                     record["volume_path"] = pdf_path
                     logger.info(f"Downloaded PDF for {paper_id}")
                 except Exception:
-                    logger.warning(
-                        f"Could not download PDF for {paper_id}."
-                    )
+                    logger.warning(f"Could not download PDF for {paper_id}.")
 
             # Avoid hammering external servers
             time.sleep(1)
 
         downloaded = sum(1 for r in records if r.get("volume_path"))
         logger.info(
-            f"Fetched {len(records)} papers; "
-            f"{downloaded} PDFs saved to {self.pdf_dir}"
+            f"Fetched {len(records)} papers; {downloaded} PDFs saved to {self.pdf_dir}"
         )
 
         # ── Spark schema ──────────────────────────────────────────────
@@ -329,15 +316,9 @@ class DataProcessor:
                 T.StructField("abstract", T.StringType(), True),
                 T.StructField("year", T.LongType(), True),
                 T.StructField("publication_date", T.StringType(), True),
-                T.StructField(
-                    "authors", T.ArrayType(T.StringType()), True
-                ),
-                T.StructField(
-                    "fields_of_study", T.ArrayType(T.StringType()), True
-                ),
-                T.StructField(
-                    "publication_types", T.ArrayType(T.StringType()), True
-                ),
+                T.StructField("authors", T.ArrayType(T.StringType()), True),
+                T.StructField("fields_of_study", T.ArrayType(T.StringType()), True),
+                T.StructField("publication_types", T.ArrayType(T.StringType()), True),
                 T.StructField("venue", T.StringType(), True),
                 T.StructField("url", T.StringType(), True),
                 T.StructField("open_access_pdf", T.StringType(), True),
@@ -350,15 +331,11 @@ class DataProcessor:
             ]
         )
 
-        metadata_df = self.spark.createDataFrame(
-            records, schema=schema
-        )
+        metadata_df = self.spark.createDataFrame(records, schema=schema)
 
         # Create the table on first run (mode="ignore" is a no-op if it
         # already exists)
-        metadata_df.write.format("delta").mode("ignore").saveAsTable(
-            self.papers_table
-        )
+        metadata_df.write.format("delta").mode("ignore").saveAsTable(self.papers_table)
 
         # MERGE to avoid duplicates based on paper_id
         metadata_df.createOrReplaceTempView("new_ss_papers")
@@ -382,9 +359,7 @@ class DataProcessor:
                 source.processed, source.volume_path
             )
         """)
-        logger.info(
-            f"Merged {len(records)} records into {self.papers_table}"
-        )
+        logger.info(f"Merged {len(records)} records into {self.papers_table}")
         return records
 
     def parse_pdfs_with_ai(self) -> None:
@@ -435,10 +410,7 @@ class DataProcessor:
             )
         """)
 
-        logger.info(
-            f"Parsed PDFs from {self.pdf_dir} "
-            f"and saved to {self.parsed_table}"
-        )
+        logger.info(f"Parsed PDFs from {self.pdf_dir} and saved to {self.parsed_table}")
 
     @staticmethod
     def _extract_chunks(
@@ -457,9 +429,7 @@ class DataProcessor:
         parsed_dict = json.loads(parsed_content_json)
         chunks = []
 
-        for element in (
-            parsed_dict.get("document", {}).get("elements", [])
-        ):
+        for element in parsed_dict.get("document", {}).get("elements", []):
             if element.get("type") == "text":
                 chunk_id = element.get("id", "")
                 content = element.get("content", "")
@@ -514,9 +484,7 @@ class DataProcessor:
             f"{self.parsed_table} for end date {self.end}"
         )
 
-        df = self.spark.table(self.parsed_table).where(
-            f"processed = {self.end}"
-        )
+        df = self.spark.table(self.parsed_table).where(f"processed = {self.end}")
 
         # Define schema for the extracted chunks
         chunk_schema = ArrayType(
@@ -529,9 +497,7 @@ class DataProcessor:
         )
 
         extract_chunks_udf = udf(self._extract_chunks, chunk_schema)
-        extract_paper_id_udf = udf(
-            self._extract_paper_id, StringType()
-        )
+        extract_paper_id_udf = udf(self._extract_paper_id, StringType())
         clean_chunk_udf = udf(self._clean_chunk, StringType())
 
         metadata_df = self.spark.table(self.papers_table).select(
@@ -539,38 +505,27 @@ class DataProcessor:
             col("title"),
             col("abstract"),
             concat_ws(", ", col("authors")).alias("authors"),
-            concat_ws(", ", col("fields_of_study")).alias(
-                "fields_of_study"
-            ),
+            concat_ws(", ", col("fields_of_study")).alias("fields_of_study"),
             col("year"),
             col("citation_count"),
         )
 
         # Explode parsed chunks, clean text, and join metadata
         chunks_df = (
-            df.withColumn(
-                "paper_id", extract_paper_id_udf(col("path"))
-            )
-            .withColumn(
-                "chunks", extract_chunks_udf(col("parsed_content"))
-            )
+            df.withColumn("paper_id", extract_paper_id_udf(col("path")))
+            .withColumn("chunks", extract_chunks_udf(col("parsed_content")))
             .withColumn("chunk", explode(col("chunks")))
             .select(
                 col("paper_id"),
                 col("chunk.chunk_id").alias("chunk_id"),
                 clean_chunk_udf(col("chunk.content")).alias("text"),
-                concat_ws(
-                    "_", col("paper_id"), col("chunk.chunk_id")
-                ).alias("id"),
+                concat_ws("_", col("paper_id"), col("chunk.chunk_id")).alias("id"),
             )
             .join(metadata_df, "paper_id", "left")
         )
 
         # Write to chunks table
-        chunks_table = (
-            f"{self.catalog}.{self.schema}"
-            f".semantic_scholar_chunks_table"
-        )
+        chunks_table = f"{self.catalog}.{self.schema}.semantic_scholar_chunks_table"
         chunks_df.write.mode("append").saveAsTable(chunks_table)
         logger.info(f"Saved chunks to {chunks_table}")
 
@@ -579,9 +534,7 @@ class DataProcessor:
             ALTER TABLE {chunks_table}
             SET TBLPROPERTIES (delta.enableChangeDataFeed = true)
         """)
-        logger.info(
-            f"Change Data Feed enabled for {chunks_table}"
-        )
+        logger.info(f"Change Data Feed enabled for {chunks_table}")
 
     def process_and_save(self) -> None:
         """
@@ -609,7 +562,9 @@ class DataProcessor:
             if not has_unprocessed:
                 logger.info("No PDFs downloaded — skipping parsing and chunking.")
                 return
-            logger.info(f"No new PDFs, but found {unparsed_count} existing PDFs to parse.")
+            logger.info(
+                f"No new PDFs, but found {unparsed_count} existing PDFs to parse."
+            )
 
         # Step 2: Parse PDFs with ai_parse_document
         self.parse_pdfs_with_ai()
@@ -618,4 +573,3 @@ class DataProcessor:
         # Step 3: Process chunks
         self.process_chunks()
         logger.info("Processing complete!")
-
