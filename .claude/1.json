@@ -6,9 +6,9 @@
   },
   "environment": {
     "MLFLOW_CLAUDE_TRACING_ENABLED": "true",
-    "MLFLOW_TRACKING_URI": "databricks://mlops-book",
+    "MLFLOW_TRACKING_URI": "databricks://lzago-mlops",
     "MLFLOW_EXPERIMENT_NAME": "/Workspace/Shared/brickkit",
-    "DATABRICKS_CONFIG_PROFILE": "mlops-book"
+    "DATABRICKS_CONFIG_PROFILE": "lzago-mlops"
   },
   "hooks": {
     "Stop": [

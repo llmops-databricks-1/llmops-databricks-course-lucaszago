@@ -1,9 +1,9 @@
 resources:
   jobs:
-    hello_world_job:
-      name: hello-world
+    semantic_scholar_ingestion_job:
+      name: semantic_scholar_ingestion
       tags:
-        project_name: "llmops-databricks-course-lucaszago"
+        project_name: "semantic_scholar"
 
       environments:
         - environment_key: default
@@ -13,10 +13,10 @@ resources:
               - ../dist/*.whl
 
       tasks:
-        - task_key: hello_world
+        - task_key: semantic_scholar_ingestion
           environment_key: default
           notebook_task:
-            notebook_path: ../notebooks/hello_world.py
+            notebook_path: ../notebooks/semantic_scholar_ingestion.py
             base_parameters:
               env: ${bundle.target}
               git_sha: "${var.git_sha}"

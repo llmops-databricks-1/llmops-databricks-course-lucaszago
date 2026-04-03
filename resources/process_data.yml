@@ -1,0 +1,23 @@
+resources:
+  jobs:
+    process_data_job:
+      name: process_data
+      tags:
+        project_name: "semantic_scholar"
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: process_data
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/pdf_parsing_ai_parse.py
+            base_parameters:
+              env: ${bundle.target}
+              git_sha: "${var.git_sha}"
+              run_id: "{{job.run_id}}"
