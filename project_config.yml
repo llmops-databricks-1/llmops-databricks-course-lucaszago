@@ -9,7 +9,8 @@ dev:
   embedding_endpoint: databricks-gte-large-en
   warehouse_id: 7077f4cb0e616c62
   vector_search_endpoint: llmops_course_vs_endpoint
-
+  lakebase_project_id: arxiv-agent-lakebase
+  experiment_name: /Shared/semantic-curator
 
 
 # Model configuration
