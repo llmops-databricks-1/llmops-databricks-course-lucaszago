@@ -3,24 +3,22 @@
 
 # COMMAND ----------
 
-from semantic_curator.agent import SemanticAgent
+import os
+import random
 from datetime import datetime
 from uuid import uuid4
-import random
-import os
-from dotenv import load_dotenv
 
 import mlflow
 from databricks.sdk import WorkspaceClient
+from dotenv import load_dotenv
 from loguru import logger
 from mlflow.types.responses import (
     ResponsesAgentRequest,
 )
 from pyspark.sql import SparkSession
 
-from semantic_curator.config import load_config, get_env
 from semantic_curator.agent import SemanticAgent
-
+from semantic_curator.config import get_env, load_config
 
 # COMMAND ----------
 
@@ -89,7 +87,6 @@ w = WorkspaceClient()
 # MAGIC - Automatic deployment metadata
 
 
-
 # COMMAND ----------
 
 # MAGIC %md
@@ -108,7 +105,7 @@ agent = SemanticAgent(
     catalog=cfg.catalog,
     schema=cfg.schema,
     genie_space_id=cfg.genie_space_id,
-    lakebase_project_id=cfg.lakebase_project_id
+    lakebase_project_id=cfg.lakebase_project_id,
 )
 
 logger.info("✓ SemanticAgent created with MCP tools:")
@@ -129,14 +126,13 @@ request_id = f"req-{timestamp}-{random.randint(100000, 999999)}"
 
 # Create request
 test_request = ResponsesAgentRequest(
-    input=[{
-        "role": "user",
-        "content": "Find papers about transformers and attention mechanisms"
-    }],
-    custom_inputs={
-        "session_id": session_id,
-        "request_id": request_id
-    }
+    input=[
+        {
+            "role": "user",
+            "content": "Find papers about transformers and attention mechanisms",
+        }
+    ],
+    custom_inputs={"session_id": session_id, "request_id": request_id},
 )
 
 logger.info(f"Session ID: {session_id}")
@@ -158,25 +154,24 @@ logger.info("✓ Trace created! Check MLflow UI for complete trace.")
 # COMMAND ----------
 
 # Start a conversation
-conversation_session = f"s-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{random.randint(100000, 999999)}"
+conversation_session = (
+    f"s-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{random.randint(100000, 999999)}"
+)
 
 logger.info(f"Conversation Session: {conversation_session}")
 
 # Turn 1
 request1 = ResponsesAgentRequest(
-    input=[{
-        "role": "user",
-        "content": "Calculate 100 plus 50"
-    }],
+    input=[{"role": "user", "content": "Calculate 100 plus 50"}],
     custom_inputs={
         "session_id": conversation_session,
-        "request_id": f"req-1-{uuid4().hex[:8]}"
-    }
+        "request_id": f"req-1-{uuid4().hex[:8]}",
+    },
 )
 
 response1 = agent.predict(request1)
-logger.info(f"Turn 1:")
-logger.info(f"User: Calculate 100 plus 50")
+logger.info("Turn 1:")
+logger.info("User: Calculate 100 plus 50")
 logger.info(f"Agent: {response1.output[-1].content}")
 
 # Turn 2 (with context)
@@ -184,17 +179,17 @@ request2 = ResponsesAgentRequest(
     input=[
         {"role": "user", "content": "Calculate 100 plus 50"},
         {"role": "assistant", "content": response1.output[-1].content},
-        {"role": "user", "content": "Now multiply that by 2"}
+        {"role": "user", "content": "Now multiply that by 2"},
     ],
     custom_inputs={
         "session_id": conversation_session,
-        "request_id": f"req-2-{uuid4().hex[:8]}"
-    }
+        "request_id": f"req-2-{uuid4().hex[:8]}",
+    },
 )
 
 response2 = agent.predict(request2)
-logger.info(f"Turn 2:")
-logger.info(f"User: Now multiply that by 2")
+logger.info("Turn 2:")
+logger.info("User: Now multiply that by 2")
 logger.info(f"Agent: {response2.output[-1].content}")
 
 logger.info(f"✓ Multi-turn conversation traced with session: {conversation_session}")
@@ -209,7 +204,7 @@ logger.info(f"✓ Multi-turn conversation traced with session: {conversation_ses
 # Search traces by session (returns DataFrame)
 session_traces_df = mlflow.search_traces(
     filter_string=f"request_metadata.`mlflow.trace.session` = '{conversation_session}'",
-    order_by=["timestamp_ms ASC"]
+    order_by=["timestamp_ms ASC"],
 )
 
 logger.info(f"Traces for session {conversation_session}:")
@@ -217,13 +212,13 @@ logger.info("=" * 80)
 
 if len(session_traces_df) > 0:
     logger.info(f"Available columns: {list(session_traces_df.columns)}")
-    
+
     # Select only scalar columns to avoid Arrow conversion errors
     simple_cols = []
     for col in session_traces_df.columns:
-        if col not in ['request', 'response', 'spans', 'inputs', 'outputs']:
+        if col not in ["request", "response", "spans", "inputs", "outputs"]:
             simple_cols.append(col)
-    
+
     if simple_cols:
         display(session_traces_df[simple_cols].head())
     else:
@@ -239,42 +234,39 @@ else:
 # COMMAND ----------
 
 # Get recent agent traces (returns DataFrame)
-recent_traces_df = mlflow.search_traces(
-    order_by=["timestamp_ms DESC"],
-    max_results=20
-)
+recent_traces_df = mlflow.search_traces(order_by=["timestamp_ms DESC"], max_results=20)
 
 if len(recent_traces_df) > 0:
     logger.info("Performance Statistics:")
     logger.info("=" * 80)
     logger.info(f"Total traces: {len(recent_traces_df)}")
-    
+
     # Calculate statistics if execution_time_ms column exists
-    if 'execution_time_ms' in recent_traces_df.columns:
-        durations = recent_traces_df['execution_time_ms'].dropna()
+    if "execution_time_ms" in recent_traces_df.columns:
+        durations = recent_traces_df["execution_time_ms"].dropna()
         if len(durations) > 0:
             logger.info(f"Avg duration: {durations.mean():.2f}ms")
             logger.info(f"Min duration: {durations.min():.2f}ms")
             logger.info(f"Max duration: {durations.max():.2f}ms")
-    
+
     # Count by status if column exists
-    if 'status' in recent_traces_df.columns:
+    if "status" in recent_traces_df.columns:
         logger.info("By Status:")
-        status_counts = recent_traces_df['status'].value_counts()
+        status_counts = recent_traces_df["status"].value_counts()
         for status, count in status_counts.items():
             logger.info(f"  {status}: {count}")
-    
+
     # Show sample of traces (select only simple columns to avoid Arrow conversion issues)
     logger.info("Sample Traces:")
     logger.info(f"Available columns: {list(recent_traces_df.columns)}")
-    
+
     # Select only scalar columns for display
     simple_cols = []
     for col in recent_traces_df.columns:
         # Skip complex object columns that cause Arrow conversion errors
-        if col not in ['request', 'response', 'spans', 'inputs', 'outputs']:
+        if col not in ["request", "response", "spans", "inputs", "outputs"]:
             simple_cols.append(col)
-    
+
     if simple_cols:
         display(recent_traces_df[simple_cols].head())
     else:
@@ -291,27 +283,27 @@ if len(recent_traces_df) > 0:
 if len(recent_traces_df) > 0:
     # Get the most recent trace (first row)
     trace = recent_traces_df.iloc[0]
-    
+
     print("Detailed Trace Inspection:")
     print("=" * 80)
     print(f"Request ID: {trace.get('request_id', 'N/A')}")
     print(f"Trace ID: {trace.get('trace_id', 'N/A')}")
     print(f"Duration: {trace.get('execution_time_ms', 'N/A')}ms")
     print(f"Status: {trace.get('status', 'N/A')}")
-    
+
     # Tags
-    if 'tags' in trace and trace['tags']:
-        print(f"\nTags:")
-        for key, value in trace['tags'].items():
+    if "tags" in trace and trace["tags"]:
+        print("\nTags:")
+        for key, value in trace["tags"].items():
             print(f"  {key}: {value}")
-    
+
     # Metadata
-    if 'request_metadata' in trace and trace['request_metadata']:
-        print(f"\nMetadata:")
-        for key, value in trace['request_metadata'].items():
+    if "request_metadata" in trace and trace["request_metadata"]:
+        print("\nMetadata:")
+        for key, value in trace["request_metadata"].items():
             print(f"  {key}: {value}")
-    
+
     # Spans
-    if 'spans' in trace:
-        spans_count = len(trace['spans']) if trace['spans'] else 0
+    if "spans" in trace:
+        spans_count = len(trace["spans"]) if trace["spans"] else 0
         print(f"\nSpans: {spans_count}")

@@ -1,8 +1,8 @@
 import mlflow
 from mlflow.genai.scorers import Guidelines
 
-from arxiv_curator.agent import ArxivAgent
-from arxiv_curator.config import ProjectConfig
+from semantic_curator.agent import SemanticAgent
+from semantic_curator.config import ProjectConfig
 
 polite_tone_guideline = Guidelines(
     name="polite_tone",
@@ -35,7 +35,9 @@ hook_in_post_guideline = Guidelines(
 )
 
 
-def evaluate_agent(cfg: ProjectConfig, eval_inputs_path: str) -> mlflow.models.EvaluationResult:
+def evaluate_agent(
+    cfg: ProjectConfig, eval_inputs_path: str
+) -> mlflow.models.EvaluationResult:
     """Run evaluation on the agent.
 
     Args:
@@ -45,7 +47,7 @@ def evaluate_agent(cfg: ProjectConfig, eval_inputs_path: str) -> mlflow.models.E
     Returns:
         MLflow EvaluationResult with metrics.
     """
-    agent = ArxivAgent(
+    agent = SemanticAgent(
         llm_endpoint=cfg.llm_endpoint,
         system_prompt=cfg.system_prompt,
         catalog=cfg.catalog,

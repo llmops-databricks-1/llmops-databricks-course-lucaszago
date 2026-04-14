@@ -68,12 +68,8 @@ class LakebaseMemory:
     def _get_pool(self) -> ConnectionPool:
         """Get or create connection pool."""
         if self._pool is None:
-            try:
-                conn_string = self._get_connection_string()
-                self._pool = ConnectionPool(conninfo=conn_string, min_size=1, max_size=5)
-            except Exception as e:
-                logger.debug(f"Failed to initialize Lakebase connection pool: {e}")
-                raise
+            conn_string = self._get_connection_string()
+            self._pool = ConnectionPool(conninfo=conn_string, min_size=1, max_size=5)
         return self._pool
 
     def _reset_pool(self) -> None:
@@ -97,10 +93,9 @@ class LakebaseMemory:
                 return [row[0] for row in result]
         except psycopg.OperationalError:
             self._reset_pool()
-            logger.debug("Lakebase connection failed, skipping message history")
-            return []
+            raise
         except Exception as e:
-            logger.debug(f"Failed to load session messages: {e}")
+            logger.warning(f"Failed to load session messages: {e}")
             return []
 
     def save_messages(self, session_id: str, messages: list[dict[str, Any]]) -> None:
@@ -115,6 +110,6 @@ class LakebaseMemory:
                     )
         except psycopg.OperationalError:
             self._reset_pool()
-            logger.debug("Lakebase connection failed, skipping message persistence")
+            raise
         except Exception as e:
-            logger.debug(f"Failed to save session messages: {e}")
+            logger.warning(f"Failed to save session messages: {e}")

@@ -1,7 +1,7 @@
 import mlflow
 from mlflow.models import ModelConfig
 
-from semantic_curator.agent import ArxivAgent
+from semantic_curator.agent import SemanticAgent
 
 config = ModelConfig(
     development_config={
@@ -14,7 +14,7 @@ config = ModelConfig(
     }
 )
 
-agent = ArxivAgent(
+agent = SemanticAgent(
     llm_endpoint=config.get("llm_endpoint"),
     system_prompt=config.get("system_prompt"),
     catalog=config.get("catalog"),
