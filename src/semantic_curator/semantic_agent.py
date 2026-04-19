@@ -3,16 +3,9 @@ from mlflow.models import ModelConfig
 
 from semantic_curator.agent import SemanticAgent
 
-config = ModelConfig(
-    development_config={
-        "catalog": "mlops_dev",
-        "schema": "arxiv",
-        "genie_space_id": "01f0e97a42981382b3d16f3f1899fdb5",
-        "system_prompt": "prompt placeholder",
-        "llm_endpoint": "databricks-gpt-oss-120b",
-        "lakebase_project_id": "semantic-agent-lakebase",
-    }
-)
+config = ModelConfig()
+
+lakebase_project_id = None
 
 agent = SemanticAgent(
     llm_endpoint=config.get("llm_endpoint"),
@@ -20,6 +13,7 @@ agent = SemanticAgent(
     catalog=config.get("catalog"),
     schema=config.get("schema"),
     genie_space_id=config.get("genie_space_id"),
-    lakebase_project_id=config.get("lakebase_project_id"),
+    lakebase_project_id=lakebase_project_id,
 )
+
 mlflow.models.set_model(agent)

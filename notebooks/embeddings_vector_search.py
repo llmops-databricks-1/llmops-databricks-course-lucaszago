@@ -13,15 +13,19 @@
 # COMMAND ----------
 
 from databricks.vector_search.reranker import DatabricksReranker
+from databricks.sdk.runtime import dbutils
 from loguru import logger
 from pyspark.sql import SparkSession
 
 from semantic_curator.config import get_env, load_config
+from semantic_curator.utils.common import get_widget
 from semantic_curator.vector_search import VectorSearchManager
 
 # COMMAND ----------
 
 spark = SparkSession.builder.getOrCreate()
+run_id = get_widget("run_id", None)
+is_job_run = bool(run_id and run_id != "local")
 
 # Load configuration
 env = get_env(spark)
@@ -56,8 +60,22 @@ logger.info(f"  Embedding Model: {vs_manager.embedding_model}")
 
 # Ensure index is synced with latest data
 logger.info("\nEnsuring index is synced with latest data...")
-vs_manager.sync_index()
-logger.info("✓ Index sync complete")
+try:
+    vs_manager.sync_index()
+    logger.info("✓ Index sync complete")
+except Exception as e:
+    error_msg = str(e).lower()
+    if "not ready" in error_msg or "initializing" in error_msg:
+        logger.warning(
+            "Vector search index is still initializing. "
+            "Provisioning completed; rerun this step later to force sync."
+        )
+    else:
+        raise
+
+if is_job_run:
+    logger.info("Job context detected. Skipping demo searches after setup.")
+    dbutils.notebook.exit("Vector search setup completed")
 
 # COMMAND ----------
 

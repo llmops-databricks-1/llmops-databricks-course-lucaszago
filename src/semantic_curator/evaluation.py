@@ -1,8 +1,28 @@
+from pathlib import Path
+
 import mlflow
 from mlflow.genai.scorers import Guidelines
 
 from semantic_curator.agent import SemanticAgent
 from semantic_curator.config import ProjectConfig
+
+
+def _resolve_eval_inputs_path(eval_inputs_path: str) -> str:
+    path = Path(eval_inputs_path)
+    if path.is_absolute() and path.exists():
+        return str(path)
+
+    current = Path.cwd()
+    for _ in range(6):
+        candidate = current / eval_inputs_path
+        if candidate.exists():
+            return str(candidate)
+        candidate_by_name = current / path.name
+        if candidate_by_name.exists():
+            return str(candidate_by_name)
+        current = current.parent
+
+    return eval_inputs_path
 
 polite_tone_guideline = Guidelines(
     name="polite_tone",
@@ -53,9 +73,10 @@ def evaluate_agent(
         catalog=cfg.catalog,
         schema=cfg.schema,
         genie_space_id=cfg.genie_space_id,
-        lakebase_project_id=cfg.lakebase_project_id,
+        lakebase_project_id=None,
     )
 
+    eval_inputs_path = _resolve_eval_inputs_path(eval_inputs_path)
     with open(eval_inputs_path) as f:
         eval_data = [{"inputs": {"question": line.strip()}} for line in f if line.strip()]
 
@@ -131,6 +152,7 @@ def create_eval_data_from_file(eval_inputs_path: str) -> list[dict]:
     Returns:
         List of evaluation data dictionaries
     """
+    eval_inputs_path = _resolve_eval_inputs_path(eval_inputs_path)
     with open(eval_inputs_path) as f:
         eval_data = [{"inputs": {"question": line.strip()}} for line in f if line.strip()]
     return eval_data

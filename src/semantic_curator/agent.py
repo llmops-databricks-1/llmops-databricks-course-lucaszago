@@ -4,7 +4,7 @@ import os
 import warnings
 from collections.abc import Generator
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import backoff
@@ -33,7 +33,9 @@ from mlflow.types.responses import (
 
 from semantic_curator.config import ProjectConfig
 from semantic_curator.mcp import create_mcp_tools
-from semantic_curator.memory import LakebaseMemory
+
+if TYPE_CHECKING:
+    from semantic_curator.memory import LakebaseMemory
 
 
 class SemanticAgent(ResponsesAgent):
@@ -51,23 +53,37 @@ class SemanticAgent(ResponsesAgent):
 
         self.system_prompt = system_prompt
         self.llm_endpoint = llm_endpoint
+        self.catalog = catalog
+        self.schema = schema
+        self.genie_space_id = genie_space_id
+        self.lakebase_project_id = lakebase_project_id
+
+        self.workspace_client: WorkspaceClient | None = None
+        self.model_serving_client = None
+        self.memory: LakebaseMemory | None = None
+        self._tools_dict: dict[str, Any] = {}
+        self._initialized = False
+
+    def _ensure_initialized(self) -> None:
+        if self._initialized:
+            return
+
         self.workspace_client = WorkspaceClient()
         self.model_serving_client = (
             self.workspace_client.serving_endpoints.get_open_ai_client()
         )
 
-        # Initialize Lakebase memory if configured
-        self.memory: LakebaseMemory | None = None
-        if lakebase_project_id:
+        if self.lakebase_project_id:
+            from semantic_curator.memory import LakebaseMemory
+
             self.memory = LakebaseMemory(
-                project_id=lakebase_project_id,
+                project_id=self.lakebase_project_id,
             )
 
-        # Create tools from config
         host = self.workspace_client.config.host
-        url_list = [f"{host}/api/2.0/mcp/vector-search/{catalog}/{schema}"]
-        if genie_space_id:
-            url_list.append(f"{host}/api/2.0/mcp/genie/{genie_space_id}")
+        url_list = [f"{host}/api/2.0/mcp/vector-search/{self.catalog}/{self.schema}"]
+        if self.genie_space_id:
+            url_list.append(f"{host}/api/2.0/mcp/genie/{self.genie_space_id}")
 
         tools = asyncio.run(
             create_mcp_tools(
@@ -76,14 +92,17 @@ class SemanticAgent(ResponsesAgent):
             )
         )
         self._tools_dict = {tool.name: tool for tool in tools}
+        self._initialized = True
 
     def get_tool_specs(self) -> list[dict]:
         """Returns tool specifications in the format OpenAI expects."""
+        self._ensure_initialized()
         return [tool_info.spec for tool_info in self._tools_dict.values()]
 
     @mlflow.trace(span_type=SpanType.TOOL)
     def execute_tool(self, tool_name: str, args: dict) -> Any:
         """Executes the specified tool with the given arguments."""
+        self._ensure_initialized()
         return self._tools_dict[tool_name].exec_fn(**args)
 
     @backoff.on_exception(backoff.expo, openai.RateLimitError)
@@ -91,6 +110,7 @@ class SemanticAgent(ResponsesAgent):
         self,
         messages: list[dict[str, Any]],
     ) -> Generator[dict[str, Any], None, None]:
+        self._ensure_initialized()
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore", message="PydanticSerializationUnexpectedValue"
@@ -137,6 +157,7 @@ class SemanticAgent(ResponsesAgent):
     @mlflow.trace(span_type=SpanType.RETRIEVER, name="memory_load")
     def load_memory(self, session_id: str) -> list[dict[str, Any]]:
         """Load previous messages from Lakebase memory."""
+        self._ensure_initialized()
         if self.memory:
             return self.memory.load_messages(session_id)
         return []
@@ -144,6 +165,7 @@ class SemanticAgent(ResponsesAgent):
     @mlflow.trace(span_type=SpanType.CHAIN, name="memory_save")
     def save_memory(self, session_id: str, messages: list[dict[str, Any]]) -> None:
         """Save new messages to Lakebase memory."""
+        self._ensure_initialized()
         self.memory.save_messages(session_id, messages)
 
     def _extract_output_items(
@@ -282,12 +304,17 @@ def log_register_agent(
 
     resources = [
         DatabricksServingEndpoint(endpoint_name=cfg.llm_endpoint),
-        DatabricksGenieSpace(genie_space_id=cfg.genie_space_id),
-        DatabricksVectorSearchIndex(index_name=f"{cfg.catalog}.{cfg.schema}.arxiv_index"),
-        DatabricksTable(table_name=f"{cfg.catalog}.{cfg.schema}.arxiv_papers"),
+        DatabricksVectorSearchIndex(
+            index_name=f"{cfg.catalog}.{cfg.schema}.semantic_scholar_index"
+        ),
+        DatabricksTable(
+            table_name=f"{cfg.catalog}.{cfg.schema}.semantic_scholar_papers"
+        ),
         DatabricksSQLWarehouse(warehouse_id=cfg.warehouse_id),
-        DatabricksServingEndpoint(endpoint_name="databricks-bge-large-en"),
+        DatabricksServingEndpoint(endpoint_name=cfg.embedding_endpoint),
     ]
+    if cfg.genie_space_id:
+        resources.insert(1, DatabricksGenieSpace(genie_space_id=cfg.genie_space_id))
 
     model_config = {
         "catalog": cfg.catalog,
@@ -311,7 +338,7 @@ def log_register_agent(
     ts = datetime.now().strftime("%Y-%m-%d")
 
     with mlflow.start_run(
-        run_name=f"arxiv-mcp-agent-{ts}",
+        run_name=f"semantic-agent-{ts}",
         tags={"git_sha": git_sha, "run_id": run_id},
     ):
         model_info = mlflow.pyfunc.log_model(

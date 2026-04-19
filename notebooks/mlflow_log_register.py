@@ -3,19 +3,18 @@ import random
 from datetime import datetime
 
 import mlflow
-from arxiv_curator.agent import ArxivAgent
-from arxiv_curator.config import ProjectConfig
-from arxiv_curator.evaluation import (
-    hook_in_post_guideline,
-    polite_tone_guideline,
-    word_count_check,
-)
 from mlflow.models.resources import (
-    DatabricksGenieSpace,
     DatabricksServingEndpoint,
     DatabricksSQLWarehouse,
     DatabricksTable,
     DatabricksVectorSearchIndex,
+)
+from semantic_curator.agent import SemanticAgent
+from semantic_curator.config import ProjectConfig
+from semantic_curator.evaluation import (
+    hook_in_post_guideline,
+    polite_tone_guideline,
+    word_count_check,
 )
 
 # COMMAND ----------
@@ -23,7 +22,7 @@ from mlflow.models.resources import (
 cfg = ProjectConfig.from_yaml("../project_config.yml")
 mlflow.set_experiment(cfg.experiment_name)
 
-agent = ArxivAgent(
+agent = SemanticAgent(
     llm_endpoint=cfg.llm_endpoint,
     system_prompt=cfg.system_prompt,
     catalog=cfg.catalog,
@@ -57,11 +56,12 @@ results = mlflow.genai.evaluate(
 
 resources = [
     DatabricksServingEndpoint(endpoint_name=cfg.llm_endpoint),
-    DatabricksGenieSpace(genie_space_id=cfg.genie_space_id),
-    DatabricksVectorSearchIndex(index_name=f"{cfg.catalog}.{cfg.schema}.arxiv_index"),
-    DatabricksTable(table_name=f"{cfg.catalog}.{cfg.schema}.arxiv_papers"),
+    DatabricksVectorSearchIndex(
+        index_name=f"{cfg.catalog}.{cfg.schema}.semantic_scholar_index"
+    ),
+    DatabricksTable(table_name=f"{cfg.catalog}.{cfg.schema}.semantic_scholar_papers"),
     DatabricksSQLWarehouse(warehouse_id=cfg.warehouse_id),
-    DatabricksServingEndpoint(endpoint_name="databricks-bge-large-en"),
+    DatabricksServingEndpoint(endpoint_name=cfg.embedding_endpoint),
 ]
 
 # COMMAND ----------
@@ -93,11 +93,11 @@ run_id = "unset"
 
 ts = ts = datetime.now().strftime("%Y-%m-%d")
 with mlflow.start_run(
-    run_name=f"arxiv-agent-{ts}", tags={"git_sha": git_sha, "run_id": run_id}
+    run_name=f"semantic-agent-{ts}", tags={"git_sha": git_sha, "run_id": run_id}
 ) as run:
     model_info = mlflow.pyfunc.log_model(
         name="agent",
-        python_model="../semantic_agent.py",
+        python_model="../src/semantic_curator/semantic_agent.py",
         resources=resources,
         input_example=test_request,
         model_config=model_config,

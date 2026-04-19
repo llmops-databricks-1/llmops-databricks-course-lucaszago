@@ -6,6 +6,14 @@ from loguru import logger
 from semantic_curator.config import ProjectConfig
 
 
+def _is_missing_resource_error(error: Exception) -> bool:
+    error_msg = str(error).lower()
+    return any(
+        marker in error_msg
+        for marker in ["not found", "404", "resource_does_not_exist"]
+    )
+
+
 class VectorSearchManager:
     """Manages vector search endpoints and indexes for semantic scholar papers"""
 
@@ -81,7 +89,7 @@ class VectorSearchManager:
                 self._wait_for_index_ready(max_wait_seconds=300)
             return index
         except Exception as e:
-            if "not found" not in str(e).lower():
+            if not _is_missing_resource_error(e):
                 logger.warning(f"Error getting index: {e}")
 
         logger.info(f"Index {self.index_name} not found, creating new index...")
@@ -218,7 +226,7 @@ class VectorSearchManager:
                 error_msg = str(e)
 
                 # Check if it's a "not found" error
-                if "not found" in error_msg.lower() or "404" in error_msg:
+                if _is_missing_resource_error(e):
                     logger.warning(
                         f"Index not found (attempt {attempt + 1}/{max_retries}): "
                         f"{error_msg}"

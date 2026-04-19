@@ -1,0 +1,24 @@
+resources:
+  jobs:
+    embeddings_vector_search_job:
+      name: embeddings_vector_search
+      tags:
+        project_name: "semantic_scholar"
+        environment: ${bundle.target}
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: embeddings_vector_search
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/embeddings_vector_search.py
+            base_parameters:
+              env: ${bundle.target}
+              git_sha: "${var.git_sha}"
+              run_id: "{{job.run_id}}"

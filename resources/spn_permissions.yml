@@ -1,0 +1,22 @@
+resources:
+  jobs:
+    spn_permissions_job:
+      name: spn_permissions
+      tags:
+        project_name: "semantic_curator"
+        environment: ${bundle.target}
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: spn_permissions
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/spn_permissions.py
+            base_parameters:
+              env: ${bundle.target}
