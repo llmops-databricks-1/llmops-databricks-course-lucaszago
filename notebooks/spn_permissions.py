@@ -14,7 +14,7 @@ cfg = ProjectConfig.from_yaml("../project_config.yml", env=env)
 w = WorkspaceClient()
 
 # COMMAND ----------
-spn_app_id = dbutils.secrets.get(spn_secret_scope, "client_id")
+spn_app_id = dbutils.secrets.get("dev_SPN", "client_id")
 
 # COMMAND ----------
 vs_endpoint = w.vector_search_endpoints.get_endpoint(cfg.vector_search_endpoint)

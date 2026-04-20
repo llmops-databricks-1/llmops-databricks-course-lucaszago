@@ -97,7 +97,7 @@ with mlflow.start_run(
 ) as run:
     model_info = mlflow.pyfunc.log_model(
         name="agent",
-        python_model="../src/semantic_curator/semantic_agent.py",
+        python_model="../semantic_agent.py",
         resources=resources,
         input_example=test_request,
         model_config=model_config,

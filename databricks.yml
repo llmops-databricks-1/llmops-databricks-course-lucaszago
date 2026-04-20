@@ -31,13 +31,13 @@ sync:
 targets:
   dev:
     workspace:
-      host: https://dbc-d3858b75-976f.cloud.databricks.com/
+      host: https://adb-971256932836835.15.azuredatabricks.net/
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.target}/${bundle.name}
 
   acc:
     mode: production
     workspace:
-      host: https://dbc-ce72dccf-d4e6.cloud.databricks.com/
+      host: https://adb-971256932836835.15.azuredatabricks.net/
       root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
     variables:
       schedule_pause_status: PAUSED
@@ -45,7 +45,7 @@ targets:
   prd:
     mode: production
     workspace:
-      host: https://dbc-b96aa43b-468e.cloud.databricks.com/
+      host: https://adb-971256932836835.15.azuredatabricks.net/
       root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
     variables:
       schedule_pause_status: UNPAUSED

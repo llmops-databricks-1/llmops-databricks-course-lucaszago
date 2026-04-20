@@ -21,7 +21,7 @@ if "DATABRICKS_RUNTIME_VERSION" not in os.environ:
 cfg = ProjectConfig.from_yaml("../project_config.yml")
 env = dbutils.widgets.get("env")
 model_name = f"{cfg.catalog}.{cfg.schema}.semantic_agent"
-endpoint_name = f"semantic-agent-endpoint-{env}"
+endpoint_name = f"semantic-agent-endpoint-{env}-course"
 secret_scope = "semantic-agent-scope"
 
 model_version = MlflowClient().get_model_version_by_alias(

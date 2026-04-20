@@ -64,6 +64,7 @@ class SemanticAgent(ResponsesAgent):
         self._tools_dict: dict[str, Any] = {}
         self._initialized = False
 
+
     def _ensure_initialized(self) -> None:
         if self._initialized:
             return
