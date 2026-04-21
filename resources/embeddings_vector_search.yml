@@ -1,7 +1,7 @@
 resources:
   jobs:
     embeddings_vector_search_job:
-      name: embeddings_vector_search
+      name: ${bundle.name}-${bundle.target}-${workspace.current_user.short_name}-embeddings-vector-search
       tags:
         project_name: "semantic_scholar"
         environment: ${bundle.target}

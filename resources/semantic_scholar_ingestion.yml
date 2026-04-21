@@ -1,7 +1,7 @@
 resources:
   jobs:
     semantic_scholar_ingestion_job:
-      name: semantic_scholar_ingestion
+      name: ${bundle.name}-${bundle.target}-${workspace.current_user.short_name}-semantic-scholar-ingestion
       tags:
         project_name: "semantic_scholar"
 

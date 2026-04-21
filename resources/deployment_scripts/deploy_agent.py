@@ -7,11 +7,12 @@ from loguru import logger
 from mlflow import MlflowClient
 
 from semantic_curator.config import ProjectConfig
+from semantic_curator.utils.common import get_widget
 
 # COMMAND ----------
 git_sha = dbutils.widgets.get("git_sha")
 env = dbutils.widgets.get("env")
-secret_scope = "semantic-agent-scope"
+secret_scope = get_widget("spn_secret_scope", "dev_SPN")
 
 # Load configuration 
 cfg = ProjectConfig.from_yaml("../../project_config.yml", env=env)

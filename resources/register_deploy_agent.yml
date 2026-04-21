@@ -1,7 +1,7 @@
 resources:
   jobs:
     register_deploy_agent:
-      name: semantic-agent-register-deploy-pipeline
+      name: ${bundle.name}-${bundle.target}-${workspace.current_user.short_name}-register-deploy
       tags:
         project_name: "semantic-curator"
         environment: ${bundle.target}
@@ -31,3 +31,4 @@ resources:
             base_parameters:
               env: ${bundle.target}
               git_sha: "${var.git_sha}"
+              spn_secret_scope: ${var.spn_secret_scope}

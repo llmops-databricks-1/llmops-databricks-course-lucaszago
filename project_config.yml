@@ -7,7 +7,7 @@ dev:
   volume: lukaszag_files
   llm_endpoint: databricks-llama-4-maverick
   embedding_endpoint: databricks-gte-large-en
-  warehouse_id: 7077f4cb0e616c62
+  warehouse_id: 9c9d5a71fb3773e4
   vector_search_endpoint: llmops_vs_endpoint_dev
   lakebase_project_id: semantic-agent-lakebase-dev
   experiment_name: /Shared/semantic-curator-dev
@@ -18,7 +18,7 @@ acc:
   volume: lukaszag_files
   llm_endpoint: databricks-meta-llama-3-1-70b-instruct
   embedding_endpoint: databricks-gte-large-en
-  warehouse_id: 7077f4cb0e616c62
+  warehouse_id: 9c9d5a71fb3773e4
   vector_search_endpoint: llmops_vs_endpoint_acc 
   lakebase_project_id: semantic-agent-lakebase-acc
   experiment_name: /Shared/semantic-curator-acc
@@ -30,7 +30,7 @@ prd:
   volume: lukaszag_files
   llm_endpoint: databricks-meta-llama-3-1-70b-instruct
   embedding_endpoint: databricks-gte-large-en
-  warehouse_id: 7077f4cb0e616c62
+  warehouse_id: 9c9d5a71fb3773e4
   vector_search_endpoint: llmops_vs_endpoint_prd
   lakebase_project_id: semantic-agent-lakebase-prd
   experiment_name: /Shared/semantic-curator-prd

@@ -19,6 +19,9 @@ variables:
   schedule_pause_status:
     description: schedule pause status
     default: PAUSED
+  spn_secret_scope:
+    description: Databricks secret scope containing the Lakebase SPN client_id and client_secret
+    default: dev_SPN
 
 include:
   - resources/*.yml
@@ -27,25 +30,37 @@ sync:
   include:
     - eval_inputs.txt
     - project_config.yml
+    - notebooks/**
+    - resources/deployment_scripts/**
+    - src/**
+  exclude:
+    - .venv/**
+    - .databricks/**
+    - "**/__pycache__/**"
+    - "**/*.pyc"
 
 targets:
   dev:
     workspace:
-      host: https://adb-971256932836835.15.azuredatabricks.net/
+      host: https://dbc-b1b2f91a-d102.cloud.databricks.com/
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.target}/${bundle.name}
+    variables:
+      spn_secret_scope: dev_SPN
 
   acc:
     mode: production
     workspace:
-      host: https://adb-971256932836835.15.azuredatabricks.net/
+      host: https://dbc-b1b2f91a-d102.cloud.databricks.com/
       root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
     variables:
       schedule_pause_status: PAUSED
+      spn_secret_scope: acc_SPN
 
   prd:
     mode: production
     workspace:
-      host: https://adb-971256932836835.15.azuredatabricks.net/
+      host: https://dbc-b1b2f91a-d102.cloud.databricks.com/
       root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
     variables:
       schedule_pause_status: UNPAUSED
+      spn_secret_scope: prd_SPN

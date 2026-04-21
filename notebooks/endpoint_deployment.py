@@ -8,6 +8,7 @@ from loguru import logger
 from mlflow import MlflowClient
 
 from semantic_curator.config import ProjectConfig
+from semantic_curator.utils.common import get_widget
 
 
 # Setup MLFLOW TRACKING 
@@ -22,7 +23,7 @@ cfg = ProjectConfig.from_yaml("../project_config.yml")
 env = dbutils.widgets.get("env")
 model_name = f"{cfg.catalog}.{cfg.schema}.semantic_agent"
 endpoint_name = f"semantic-agent-endpoint-{env}-course"
-secret_scope = "semantic-agent-scope"
+secret_scope = get_widget("spn_secret_scope", "dev_SPN")
 
 model_version = MlflowClient().get_model_version_by_alias(
     model_name, "latest-model"
