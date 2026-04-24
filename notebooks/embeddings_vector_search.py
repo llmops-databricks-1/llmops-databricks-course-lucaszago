@@ -12,8 +12,8 @@
 
 # COMMAND ----------
 
-from databricks.vector_search.reranker import DatabricksReranker
 from databricks.sdk.runtime import dbutils
+from databricks.vector_search.reranker import DatabricksReranker
 from loguru import logger
 from pyspark.sql import SparkSession
 

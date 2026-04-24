@@ -22,6 +22,13 @@ from semantic_curator.config import get_env, load_config
 
 # COMMAND ----------
 
+if "display" not in globals():
+
+    def display(value: object) -> None:
+        """Fallback for local execution outside Databricks notebooks."""
+        print(value)
+
+
 # Setup MLflow tracking
 if "DATABRICKS_RUNTIME_VERSION" not in os.environ:
     load_dotenv()
@@ -101,7 +108,10 @@ w = WorkspaceClient()
 # Create agent with MCP tools
 agent = SemanticAgent(
     llm_endpoint=cfg.llm_endpoint,
-    system_prompt="You are a helpful research assistant. Use vector search to find papers and Genie to query data.",
+    system_prompt=(
+        "You are a helpful research assistant. Use vector search to find "
+        "papers and Genie to query data."
+    ),
     catalog=cfg.catalog,
     schema=cfg.schema,
     genie_space_id=cfg.genie_space_id,

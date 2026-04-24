@@ -64,7 +64,6 @@ class SemanticAgent(ResponsesAgent):
         self._tools_dict: dict[str, Any] = {}
         self._initialized = False
 
-
     def _ensure_initialized(self) -> None:
         if self._initialized:
             return
@@ -101,7 +100,7 @@ class SemanticAgent(ResponsesAgent):
         return [tool_info.spec for tool_info in self._tools_dict.values()]
 
     @mlflow.trace(span_type=SpanType.TOOL)
-    def execute_tool(self, tool_name: str, args: dict) -> Any:
+    def execute_tool(self, tool_name: str, args: dict[str, object]) -> str:
         """Executes the specified tool with the given arguments."""
         self._ensure_initialized()
         return self._tools_dict[tool_name].exec_fn(**args)
@@ -308,9 +307,7 @@ def log_register_agent(
         DatabricksVectorSearchIndex(
             index_name=f"{cfg.catalog}.{cfg.schema}.semantic_scholar_index"
         ),
-        DatabricksTable(
-            table_name=f"{cfg.catalog}.{cfg.schema}.semantic_scholar_papers"
-        ),
+        DatabricksTable(table_name=f"{cfg.catalog}.{cfg.schema}.semantic_scholar_papers"),
         DatabricksSQLWarehouse(warehouse_id=cfg.warehouse_id),
         DatabricksServingEndpoint(endpoint_name=cfg.embedding_endpoint),
     ]

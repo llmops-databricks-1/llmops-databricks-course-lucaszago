@@ -24,7 +24,8 @@ class LakebaseMemory:
         """Build connection string for Lakebase.
 
         Supports two authentication modes:
-        - SPN (production): Needs LAKEBASE_SP_CLIENT_ID, LAKEBASE_SP_CLIENT_SECRET, LAKEBASE_SP_HOST
+        - SPN (production): Needs LAKEBASE_SP_CLIENT_ID,
+          LAKEBASE_SP_CLIENT_SECRET, LAKEBASE_SP_HOST
         - User (local testing): Uses default WorkspaceClient auth
         """
         # Use dedicated Lakebase SPN env vars to avoid overriding

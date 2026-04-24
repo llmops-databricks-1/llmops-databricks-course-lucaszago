@@ -6,6 +6,7 @@ import nest_asyncio
 from databricks.sdk import WorkspaceClient
 from databricks_mcp import DatabricksMCPClient
 from loguru import logger
+from openai import OpenAI
 from pyspark.sql import SparkSession
 
 from semantic_curator.config import get_env, load_config
@@ -80,7 +81,8 @@ if hasattr(cfg, "genie_space_id") and cfg.genie_space_id:
 else:
     logger.warning("Genie space not configured in project_config.yml")
     logger.info(
-        "To use genie tools, add 'genie_space_id' to your project_config.yml with the ID of your genie space"
+        "To use genie tools, add 'genie_space_id' to your "
+        "project_config.yml with the ID of your genie space"
     )
 
 # COMMAND ----------
@@ -154,11 +156,8 @@ def test_mcp_connection(mcp_url: str) -> bool:
 logger.info("Testing vector search MCP:")
 test_mcp_connection(vector_search_mcp_url)
 
+
 # COMMAND ----------
-# Simple Agent
-from openai import OpenAI
-
-
 class SimpleAgent:
     """A simple agent that can call tools in a loop"""
 
@@ -188,7 +187,7 @@ class SimpleAgent:
             {"role": "user", "content": user_message},
         ]
 
-        for iteration in range(max_iterations):
+        for _iteration in range(max_iterations):
             response = self._client.chat.completions.create(
                 model=self.llm_endpoint,
                 messages=messages,
@@ -244,12 +243,15 @@ class SimpleAgent:
 # Create agent with mcp tools
 agent = SimpleAgent(
     llm_endpoint=cfg.llm_endpoint,
-    system_prompt="You are a helpful research assistant. Use the available tools to search for papers and answer questions.",
+    system_prompt=(
+        "You are a helpful research assistant. Use the available tools to "
+        "search for papers and answer questions."
+    ),
     tools=mcp_tools,
 )
 
 logger.info("Agent created with the following tools:")
-for tool_name in agent._tools_dict.keys():
+for tool in agent._tools_dict.values():
     logger.info(f"- {tool.name}")
 
 # COMMAND ----------

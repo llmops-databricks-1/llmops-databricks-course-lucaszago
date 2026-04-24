@@ -1,6 +1,3 @@
-"""MCP utils"""
-
-# Databricks notebook source
 from collections.abc import Callable
 
 from databricks.sdk import WorkspaceClient
@@ -8,7 +5,6 @@ from databricks_mcp import DatabricksMCPClient
 from pydantic import BaseModel
 
 
-# COMMAND ----------
 class ToolInfo(BaseModel):
     """
     Tool information for agent integration
@@ -20,7 +16,7 @@ class ToolInfo(BaseModel):
 
     name: str
     spec: dict
-    exec_fn: Callable
+    exec_fn: Callable[..., str]
 
     class Config:
         arbitrary_types_allowed = True
@@ -28,7 +24,7 @@ class ToolInfo(BaseModel):
 
 def create_managed_exec_fn(
     server_url: str, tool_name: str, w: WorkspaceClient
-) -> Callable:
+) -> Callable[..., str]:
     """
     Create an execution function for an MCP tool
     Args:
@@ -40,10 +36,10 @@ def create_managed_exec_fn(
         Callable that executes the toool
     """
 
-    def exec_fn(**kwargs):
+    def exec_fn(**kwargs: object) -> str:
         client = DatabricksMCPClient(server_url=server_url, workspace_client=w)
         response = client.call_tool(tool_name, kwargs)
-        return "".join([c.text for c in response.content])
+        return "".join(c.text for c in response.content)
 
     return exec_fn
 

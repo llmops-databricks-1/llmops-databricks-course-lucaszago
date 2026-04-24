@@ -30,4 +30,3 @@ w.permissions.update(
 )
 
 # COMMAND ----------
-

@@ -22,6 +22,7 @@ from google.protobuf.duration_pb2 import Duration
 from loguru import logger
 
 from semantic_curator.config import ProjectConfig
+from semantic_curator.memory import LakebaseMemory
 
 cfg = ProjectConfig.from_yaml("../project_config.yml")
 
@@ -96,8 +97,7 @@ test_messages = [
 with psycopg.connect(conn_string) as conn:
     for msg in test_messages:
         conn.execute(
-            "INSERT INTO session_messages (session_id, message_data) "
-            "VALUES (%s, %s)",
+            "INSERT INTO session_messages (session_id, message_data) VALUES (%s, %s)",
             (test_session_id, json.dumps(msg)),
         )
 
@@ -122,10 +122,6 @@ with psycopg.connect(conn_string) as conn:
 
 # MAGIC %md
 # MAGIC ## Test with LakebaseMemory Class
-
-# COMMAND ----------
-
-from semantic_curator.memory import LakebaseMemory
 
 memory = LakebaseMemory(
     project_id=project_id,

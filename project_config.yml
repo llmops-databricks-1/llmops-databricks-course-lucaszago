@@ -13,13 +13,13 @@ dev:
   experiment_name: /Shared/semantic-curator-dev
 
 acc:
-  catalog: llmops_acc 
-  schema: lukaszag 
+  catalog: llmops_acc
+  schema: lukaszag
   volume: lukaszag_files
   llm_endpoint: databricks-meta-llama-3-1-70b-instruct
   embedding_endpoint: databricks-gte-large-en
   warehouse_id: 9c9d5a71fb3773e4
-  vector_search_endpoint: llmops_vs_endpoint_acc 
+  vector_search_endpoint: llmops_vs_endpoint_acc
   lakebase_project_id: semantic-agent-lakebase-acc
   experiment_name: /Shared/semantic-curator-acc
 
@@ -36,7 +36,7 @@ prd:
   experiment_name: /Shared/semantic-curator-prd
 
 
-  
+
 
 
 

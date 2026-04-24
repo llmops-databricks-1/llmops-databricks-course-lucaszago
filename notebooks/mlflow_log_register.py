@@ -3,12 +3,14 @@ import random
 from datetime import datetime
 
 import mlflow
+from mlflow import MlflowClient
 from mlflow.models.resources import (
     DatabricksServingEndpoint,
     DatabricksSQLWarehouse,
     DatabricksTable,
     DatabricksVectorSearchIndex,
 )
+
 from semantic_curator.agent import SemanticAgent
 from semantic_curator.config import ProjectConfig
 from semantic_curator.evaluation import (
@@ -114,9 +116,6 @@ registered_model = mlflow.register_model(
     tags={"git_sha": git_sha, "run_id": run_id},
     env_pack="databricks_model_serving",
 )
-
-# COMMAND ----------
-from mlflow import MlflowClient
 
 client = MlflowClient()
 client.set_registered_model_alias(

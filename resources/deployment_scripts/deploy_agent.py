@@ -1,9 +1,8 @@
 # Databricks notebook source
-from databricks import agents 
+from databricks import agents
 from databricks.sdk import WorkspaceClient
-from databricks.sdk.runtime import dbutils 
-
-from loguru import logger 
+from databricks.sdk.runtime import dbutils
+from loguru import logger
 from mlflow import MlflowClient
 
 from semantic_curator.config import ProjectConfig
@@ -14,10 +13,10 @@ git_sha = dbutils.widgets.get("git_sha")
 env = dbutils.widgets.get("env")
 secret_scope = get_widget("spn_secret_scope", "dev_SPN")
 
-# Load configuration 
+# Load configuration
 cfg = ProjectConfig.from_yaml("../../project_config.yml", env=env)
 
-# Get more details 
+# Get more details
 model_name = f"{cfg.catalog}.{cfg.schema}.semantic_agent"
 endpoint_name = f"semantic-agent-endpoint-{env}"
 
@@ -25,7 +24,7 @@ client = MlflowClient()
 model_version = client.get_model_version_by_alias(model_name, "latest-model").version
 
 
-# Get experiment ID 
+# Get experiment ID
 experiment = client.get_experiment_by_name(cfg.experiment_name)
 
 logger.info("Deploying agent:")
@@ -56,4 +55,4 @@ if cfg.usage_policy_id:
 
 agents.deploy(**deploy_kwargs)
 
-logger.info(f"Deployment complete!")
+logger.info("Deployment complete!")

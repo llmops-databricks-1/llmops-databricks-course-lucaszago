@@ -9,8 +9,7 @@ from semantic_curator.config import ProjectConfig
 def _is_missing_resource_error(error: Exception) -> bool:
     error_msg = str(error).lower()
     return any(
-        marker in error_msg
-        for marker in ["not found", "404", "resource_does_not_exist"]
+        marker in error_msg for marker in ["not found", "404", "resource_does_not_exist"]
     )
 
 

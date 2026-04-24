@@ -24,10 +24,16 @@ from pyspark.sql import SparkSession
 from semantic_curator.config import get_env, load_config
 from semantic_curator.evaluation import (
     polite_tone_guideline,
-    word_count_check,
 )
 
 # COMMAND ----------
+
+if "display" not in globals():
+
+    def display(value: object) -> None:
+        """Fallback for local execution outside Databricks notebooks."""
+        print(value)
+
 
 # Setup
 if "DATABRICKS_RUNTIME_VERSION" not in os.environ:
@@ -47,7 +53,8 @@ cfg = load_config("../project_config.yml", env)
 # MAGIC %md
 # MAGIC ## 1. Why Evaluation Matters for GenAI
 # MAGIC
-# MAGIC Traditional ML evaluation (accuracy, F1, etc.) doesn't work well for GenAI because:
+# MAGIC Traditional ML evaluation (accuracy, F1, etc.) does not work well for
+# MAGIC GenAI because:
 # MAGIC
 # MAGIC ### Challenges:
 # MAGIC - **Open-ended outputs**: No single "correct" answer
@@ -175,7 +182,8 @@ display(results)
 quality_judge = make_judge(
     name="response_quality",
     instructions=(
-        "Evaluate the quality of the response in {{ outputs }} to the question in {{ inputs }}. "
+        "Evaluate the quality of the response in {{ outputs }} to the "
+        "question in {{ inputs }}. "
         "Score from 1 to 5:\n"
         "1 - Completely unhelpful or incorrect\n"
         "2 - Partially helpful but missing key information\n"
@@ -207,7 +215,11 @@ judge_test_data = [
     },
     {
         "inputs": {"question": "What is machine learning?"},
-        "outputs": "Machine learning is a subset of AI where algorithms learn patterns from data to make predictions or decisions without being explicitly programmed.",
+        "outputs": (
+            "Machine learning is a subset of AI where algorithms learn "
+            "patterns from data to make predictions or decisions without "
+            "being explicitly programmed."
+        ),
     },
 ]
 
@@ -227,7 +239,7 @@ display(judge_results.tables["eval_results"])
 
 
 @mlflow.genai.scorer
-def word_count_check(outputs: list) -> bool:
+def notebook_word_count_check(outputs: list) -> bool:
     """Check that the output is under 350 words."""
     text = outputs[0].get("text", "") if isinstance(outputs[0], dict) else str(outputs[0])
     word_count = len(text.split())
@@ -271,7 +283,10 @@ logger.info("  3. response_length_score (float 0-1)")
 custom_test_data = [
     {
         "inputs": {"question": "How to use Python?"},
-        "outputs": "Here's how:\n```python\nprint('Hello')\n```\nThis prints Hello to the console.",
+        "outputs": (
+            "Here's how:\n```python\nprint('Hello')\n```\nThis prints Hello "
+            "to the console."
+        ),
     },
     {
         "inputs": {"question": "How to use Python?"},
@@ -282,7 +297,7 @@ custom_test_data = [
 # Evaluate with custom scorers
 custom_results = mlflow.genai.evaluate(
     data=custom_test_data,
-    scorers=[word_count_check, has_code_example, response_length_score],
+    scorers=[notebook_word_count_check, has_code_example, response_length_score],
 )
 
 logger.info("Custom Scorer Results:")
@@ -322,7 +337,7 @@ logger.info("  Categories: positive, neutral, negative")
 all_scorers = [
     polite_tone_guideline,  # Binary guideline
     quality_judge,  # Numeric judge (1-5)
-    word_count_check,  # Boolean custom
+    notebook_word_count_check,  # Boolean custom
     response_length_score,  # Float custom (0-1)
     sentiment_judge,  # Categorical judge
 ]
@@ -330,7 +345,11 @@ all_scorers = [
 comprehensive_test_data = [
     {
         "inputs": {"question": "Explain transformers"},
-        "outputs": "Transformers are a neural network architecture that uses self-attention mechanisms to process sequential data. They've revolutionized NLP by enabling models like BERT and GPT.",
+        "outputs": (
+            "Transformers are a neural network architecture that uses "
+            "self-attention mechanisms to process sequential data. They have "
+            "revolutionized NLP by enabling models like BERT and GPT."
+        ),
     },
 ]
 
@@ -341,7 +360,7 @@ comprehensive_results = mlflow.genai.evaluate(
 
 logger.info("Comprehensive Evaluation Results:")
 logger.info("=" * 80)
-comprehensive_results
+display(comprehensive_results.tables["eval_results"])
 
 # COMMAND ----------
 
