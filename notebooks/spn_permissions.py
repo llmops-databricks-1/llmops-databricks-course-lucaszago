@@ -30,13 +30,4 @@ w.permissions.update(
 )
 
 # COMMAND ----------
-w.permissions.update(
-    request_object_type="warehouses",
-    request_object_id=cfg.warehouse_id,
-    access_control_list=[
-        AccessControlRequest(
-            service_principal_name=spn_app_id,
-            permission_level=PermissionLevel.CAN_USE,
-        )
-    ],
-)
+
