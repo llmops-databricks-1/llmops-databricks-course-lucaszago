@@ -1,9 +1,10 @@
 resources:
   jobs:
-    semantic_scholar_ingestion_job:
-      name: ${bundle.name}-${bundle.target}-${workspace.current_user.short_name}-semantic-scholar-ingestion
+    embeddings_vector_search_job:
+      name: ${bundle.name}-${bundle.target}-${workspace.current_user.short_name}-embeddings-vector-search
       tags:
         project_name: "semantic_scholar"
+        environment: ${bundle.target}
 
       environments:
         - environment_key: default
@@ -13,10 +14,10 @@ resources:
               - ../dist/*.whl
 
       tasks:
-        - task_key: semantic_scholar_ingestion
+        - task_key: embeddings_vector_search
           environment_key: default
           notebook_task:
-            notebook_path: ../notebooks/semantic_scholar_ingestion.py
+            notebook_path: ../notebooks/embeddings_vector_search.py
             base_parameters:
               env: ${bundle.target}
               git_sha: "${var.git_sha}"

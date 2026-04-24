@@ -11,6 +11,7 @@ from pyspark.sql import SparkSession
 class ProjectConfig(BaseModel):
     """Project configuration model."""
 
+    usage_policy_id: str | None = Field(None, description="Usage policy id")
     catalog: str = Field(..., description="Unity Catalog name")
     db_schema: str = Field(..., description="Schema name", alias="schema")
     volume: str = Field(..., description="Volume name")
@@ -18,9 +19,11 @@ class ProjectConfig(BaseModel):
     embedding_endpoint: str = Field(..., description="Embedding endpoint name")
     warehouse_id: str = Field(..., description="Warehouse ID")
     vector_search_endpoint: str = Field(..., description="Vector search endpoint name")
+    lakebase_project_id: str = Field(..., description="Lakebase project id")
     genie_space_id: str | None = Field(
         None, description="Genie space ID for MCP integration"
     )
+    experiment_name: str = Field(None, description="Experiment name")
     system_prompt: str = Field(
         default="You are a helpful AI assistant that helps users find "
         "and understand research papers.",

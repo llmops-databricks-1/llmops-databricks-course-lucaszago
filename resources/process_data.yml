@@ -1,7 +1,7 @@
 resources:
   jobs:
     process_data_job:
-      name: process_data
+      name: ${bundle.name}-${bundle.target}-${workspace.current_user.short_name}-process-data
       tags:
         project_name: "semantic_scholar"
 

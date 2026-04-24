@@ -1,0 +1,33 @@
+resources:
+  jobs:
+    spn_permissions_job:
+      name: ${bundle.name}-${bundle.target}-${workspace.current_user.short_name}-spn-permissions
+      tags:
+        project_name: "semantic_curator"
+        environment: ${bundle.target}
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: spn_lakebase_authentication
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/spn_lakebase_authentication.py
+            base_parameters:
+              env: ${bundle.target}
+              spn_secret_scope: ${var.spn_secret_scope}
+
+        - task_key: spn_permissions
+          depends_on:
+            - task_key: spn_lakebase_authentication
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/spn_permissions.py
+            base_parameters:
+              env: ${bundle.target}
+              spn_secret_scope: ${var.spn_secret_scope}
